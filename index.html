@@ -388,7 +388,7 @@ async function doLogin(){
     const found=all.find(c=>(c.rnc||"").replace(/[^0-9]/g,"")=== rnc);
     if(!found){err.textContent="RNC no encontrado. Verifica e intenta de nuevo.";btn.textContent="Entrar a mi portal";btn.disabled=false;return;}
     if(pass!==(found.portal_password||"")){err.textContent="Contraseña incorrecta.";btn.textContent="Entrar a mi portal";btn.disabled=false;return;}
-    found.decs=found.decs||{};found.docs=found.docs||{};found.conts=found.conts||{};found.recs=found.recs||{};found.tss=found.tss||{};
+    found.decs=found.declaraciones||{};found.docs=found.data_subida||{};found.conts=found.contabilidad||{};found.recs=found.recordatorios||{};found.tss=found.nomina_status||{};
     cliente=found;showApp();
   }catch(e){err.textContent="Error de conexión. Verifica tu internet.";}
   btn.textContent="Entrar a mi portal";btn.disabled=false;
