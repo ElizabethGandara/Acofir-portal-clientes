@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Acofir Strategies — Portal de Clientes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--navy:#0D1525;--navy2:#131B38;--blue:#1F21CF;--sky:#0B95E0;--gold:#C9A84C;--green:#059669;--red:#dc2626;--amber:#d97706;--slate:#64748b;--border:#e2e8f0;--light:#f8fafc;--white:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--light);color:var(--navy2);min-height:100vh;}
+#loginScreen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#loginScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 70%,rgba(31,33,207,.2),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(11,149,224,.15),transparent 60%);}
+.login-panel{position:relative;z-index:1;width:min(460px,94vw);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:52px 44px;backdrop-filter:blur(20px);}
+.login-logo{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fff;text-align:center;}
+.login-logo span{color:var(--sky);}
+.login-tagline{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);text-align:center;margin-top:6px;margin-bottom:8px;}
+.login-slogan{font-size:13px;color:rgba(255,255,255,.45);text-align:center;font-style:italic;margin-bottom:32px;line-height:1.5;}
+.lbl{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px;}
+.inp{width:100%;padding:13px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:14px;transition:border-color .2s;}
+.inp:focus{border-color:var(--sky);}
+.inp::placeholder{color:rgba(255,255,255,.2);}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--sky));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.04em;margin-top:4px;}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;}
+.login-err{font-size:12px;color:#fca5a5;text-align:center;margin-top:10px;min-height:16px;}
+.login-note{font-size:11px;color:rgba(255,255,255,.2);text-align:center;margin-top:18px;}
+#app{display:none;min-height:100vh;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:260px;min-width:260px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100;border-right:1px solid rgba(255,255,255,.06);}
+.sb-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;}
+.sb-logo span{color:var(--sky);}
+.sb-client{margin-top:8px;}
+.sb-client-name{font-size:13px;font-weight:600;color:rgba(255,255,255,.75);}
+.sb-client-rnc{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:12px 10px 4px;}
+.sb-btn{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.45);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;border:none;background:transparent;width:100%;text-align:left;font-family:'DM Sans',sans-serif;position:relative;}
+.sb-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
+.sb-btn.active{background:rgba(11,149,224,.15);color:var(--sky);}
+.sb-badge{position:absolute;right:10px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(220,38,38,.25);color:#fca5a5;}
+.sb-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.06);}
+.sb-logout{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.3);font-size:12px;transition:all .15s;border:none;background:transparent;width:100%;font-family:'DM Sans',sans-serif;}
+.sb-logout:hover{background:rgba(220,38,38,.1);color:#fca5a5;}
+.main{margin-left:260px;flex:1;overflow-y:auto;}
+.page{display:none;padding:32px 40px 60px;max-width:880px;}
+.page.active{display:block;}
+.page-hdr{margin-bottom:28px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--navy2);}
+.page-sub{font-size:14px;color:var(--slate);margin-top:4px;line-height:1.6;}
+.welcome-hero{background:linear-gradient(135deg,var(--navy) 0%,#1a2a6e 60%,var(--blue) 100%);border-radius:20px;padding:40px 44px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden;}
+.welcome-hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 20px,rgba(201,168,76,.04) 20px,rgba(201,168,76,.04) 22px);}
+.wh-inner{position:relative;z-index:1;}
+.wh-tag{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.wh-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:8px;line-height:1.2;}
+.wh-slogan{font-size:15px;color:var(--gold);font-style:italic;margin-bottom:10px;font-family:'Playfair Display',serif;}
+.wh-msg{font-size:13px;color:rgba(255,255,255,.6);line-height:1.8;max-width:540px;margin-bottom:16px;}
+.wh-rnc{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:6px 16px;font-size:12px;color:rgba(255,255,255,.45);}
+.wh-rnc strong{color:#fff;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.card-lbl{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sky);margin-bottom:8px;}
+.card-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--navy2);margin-bottom:10px;}
+.card-text{font-size:13px;color:var(--slate);line-height:1.8;}
+.valores-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;}
+.valores-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--navy2);margin-bottom:16px;}
+.valores-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.valor{background:var(--light);border-radius:10px;padding:14px;}
+.valor-name{font-size:13px;font-weight:700;color:var(--navy2);}
+.valor-desc{font-size:11px;color:var(--slate);margin-top:3px;line-height:1.5;}
+.prog-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;position:relative;overflow:hidden;}
+.prog-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy2),var(--blue),var(--sky));}
+.prog-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.prog-lbl{font-size:12px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.06em;}
+.prog-pct{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;color:var(--navy2);}
+.prog-track{height:10px;background:#e8ecf8;border-radius:20px;overflow:hidden;margin-bottom:16px;}
+.prog-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--navy2),var(--blue),var(--sky));transition:width 1.4s cubic-bezier(.4,0,.2,1);}
+.prog-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.pstat{background:var(--light);border-radius:10px;padding:14px;text-align:center;}
+.pstat-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--navy2);}
+.pstat-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);margin-top:3px;}
+.fecha-banner{background:linear-gradient(135deg,#064e3b,var(--green));border-radius:14px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.fb-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:4px;}
+.fb-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;}
+.sec-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:24px 28px;margin-bottom:16px;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.sec-title{font-size:13px;font-weight:700;color:var(--navy2);text-transform:uppercase;letter-spacing:.06em;}
+.sec-cnt{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.cnt-g{background:#dcfce7;color:#166534;}
+.cnt-a{background:#fef3c7;color:#92400e;}
+.cnt-r{background:#fee2e2;color:#991b1b;}
+.item{padding:14px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.item:last-child{border-bottom:none;}
+.item-info{flex:1;}
+.item-name{font-size:14px;font-weight:600;color:var(--navy2);margin-bottom:2px;}
+.item-sub{font-size:12px;color:var(--slate);margin-top:3px;}
+.item-exp-btn{font-size:10px;font-weight:600;border:1px solid var(--border);border-radius:20px;padding:3px 10px;background:transparent;color:var(--slate);cursor:pointer;margin-top:6px;font-family:'DM Sans',sans-serif;}
+.item-exp-btn:hover{border-color:var(--navy2);color:var(--navy2);}
+.item-exp{display:none;font-size:12px;color:var(--slate);line-height:1.7;padding:10px 14px;background:var(--light);border-left:3px solid var(--navy2);border-radius:0 8px 8px 0;margin-top:8px;}
+.item-exp.open{display:block;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.bg{background:#dcfce7;color:#166534;}
+.ba{background:#fef3c7;color:#92400e;}
+.br{background:#fee2e2;color:#991b1b;}
+.bb{background:#dbeafe;color:#1e40af;}
+.bs{background:#f1f5f9;color:var(--slate);}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dg{background:#10b981;}.da{background:var(--amber);}.dr{background:var(--red);}.db{background:var(--sky);}.ds{background:#94a3b8;}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rec-item{background:var(--light);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.rec-name{font-size:14px;font-weight:700;color:var(--navy2);}
+.rec-date{font-size:12px;color:var(--slate);margin-top:3px;}
+.sol-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.sol-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:20px;cursor:pointer;transition:all .2s;}
+.sol-card:hover{border-color:var(--navy2);}
+.sol-card.sel{border-color:var(--navy2);background:#f0f4ff;}
+.sol-name{font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:6px;}
+.sol-desc{font-size:12px;color:var(--slate);line-height:1.5;}
+.sol-form{background:var(--light);border:1.5px solid var(--border);border-radius:12px;padding:22px;display:none;margin-top:4px;}
+.sol-form.open{display:block;}
+.sol-form-title{font-size:15px;font-weight:700;color:var(--navy2);margin-bottom:16px;}
+.flbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:6px;}
+.finp{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:14px;background:var(--white);}
+.finp:focus{border-color:var(--navy2);}
+.fta{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;min-height:90px;margin-bottom:14px;background:var(--white);}
+.fta:focus{border-color:var(--navy2);}
+.btn-sub{padding:11px 24px;background:var(--navy2);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.fmsg{font-size:12px;font-weight:600;padding:10px 14px;border-radius:8px;margin-top:10px;display:none;}
+.fm-ok{background:#dcfce7;color:#166534;}
+.fm-err{background:#fee2e2;color:#991b1b;}
+.contact-card{background:var(--navy2);border-radius:16px;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:16px;}
+.cc-txt strong{color:#fff;display:block;font-size:15px;margin-bottom:4px;}
+.cc-txt{color:rgba(255,255,255,.55);font-size:13px;}
+.cc-btns{display:flex;gap:10px;}
+.btn-wa{background:#25D366;border:none;border-radius:8px;padding:10px 18px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
+.btn-em{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px 18px;color:rgba(255,255,255,.75);font-weight:600;font-size:13px;text-decoration:none;}
+.faq{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;background:var(--white);}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;cursor:pointer;}
+.faq-q:hover{background:var(--light);}
+.faq-q-txt{font-size:13px;font-weight:600;color:var(--navy2);}
+.faq-arr{font-size:11px;color:var(--slate);transition:transform .2s;}
+.faq-arr.open{transform:rotate(180deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s;}
+.faq-a.open{max-height:300px;}
+.faq-a p{padding:0 18px 14px;font-size:13px;color:var(--slate);line-height:1.7;}
+.mobile-btn{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--navy2);border:none;border-radius:8px;padding:10px;cursor:pointer;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .page{padding:20px 16px 60px;}
+  .grid2,.sol-grid,.rec-grid,.valores-grid,.prog-stats{grid-template-columns:1fr;}
+  .mobile-btn{display:flex;align-items:center;justify-content:center;}
+  .welcome-hero{padding:28px 20px;}
+  .wh-title{font-size:22px;}
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+  <svg width="18" height="14" viewBox="0 0 18 14" fill="none"><rect width="18" height="2" rx="1" fill="white"/><rect y="6" width="18" height="2" rx="1" fill="white"/><rect y="12" width="18" height="2" rx="1" fill="white"/></svg>
+</button>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-panel">
+    <div class="login-logo"><span>/</span>ACOFIR</div>
+    <div class="login-tagline">Portal de Clientes</div>
+    <div class="login-slogan">"Traducimos los números para que tu negocio crezca"</div>
+    <label class="lbl">Correo electrónico</label>
+    <input class="inp" type="email" id="inpEmail" placeholder="correo@tuempresa.com"/>
+    <label class="lbl">RNC de tu empresa</label>
+    <input class="inp" type="text" id="inpRNC" placeholder="000-00000-0"/>
+    <label class="lbl">Contraseña</label>
+    <input class="inp" type="password" id="inpPass" placeholder="Tu contraseña" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">Entrar a mi portal</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-note">Para activar tu acceso contáctanos a soporte@acofir.com</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-header">
+        <div class="sb-logo"><span>/</span>ACOFIR</div>
+        <div class="sb-client">
+          <div class="sb-client-name" id="sbNombre">—</div>
+          <div class="sb-client-rnc" id="sbRNC">—</div>
+        </div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-sec">Inicio</div>
+        <button class="sb-btn active" onclick="showPage('bienvenida',this)">Bienvenida</button>
+        <button class="sb-btn" onclick="showPage('progreso',this)">Mi Avance</button>
+        <div class="sb-sec">Mi Proceso</div>
+        <button class="sb-btn" onclick="showPage('declaraciones',this)" id="sbBtnDec">Declaraciones<span class="sb-badge" id="sbBadgeDec" style="display:none">0</span></button>
+        <button class="sb-btn" onclick="showPage('documentacion',this)" id="sbBtnDoc">Documentación<span class="sb-badge" id="sbBadgeDoc" style="display:none">0</span></button>
+        <button class="sb-btn" onclick="showPage('recordatorios',this)">Recordatorios de Pago</button>
+        <div class="sb-sec">Servicios</div>
+        <button class="sb-btn" onclick="showPage('solicitudes',this)">Solicitar Servicio</button>
+        <button class="sb-btn" onclick="showPage('contacto',this)">Contacto</button>
+        <div class="sb-sec">Mi Cuenta</div>
+        <button class="sb-btn" onclick="showPage('contrasena',this)">Cambiar Contraseña</button>
+        <button class="sb-btn" onclick="showPage('faq',this)">Preguntas Frecuentes</button>
+      </div>
+      <div class="sb-footer">
+        <button class="sb-logout" onclick="doLogout()">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- BIENVENIDA -->
+      <div class="page active" id="page-bienvenida">
+        <div class="welcome-hero">
+          <div class="wh-inner">
+            <div class="wh-tag">Tu espacio Acofir</div>
+            <div class="wh-title" id="whTitle">Bienvenido</div>
+            <div class="wh-slogan">"Traducimos los números para que tu negocio crezca"</div>
+            <div class="wh-msg">Tu tranquilidad es nuestra prioridad — porque creemos que la mejor contabilidad es la que tú puedes ver.</div>
+            <div class="wh-rnc">RNC <strong id="whRNC">—</strong></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-lbl">Nuestra Misión</div>
+            <div class="card-title">Lo que hacemos cada día</div>
+            <div class="card-text">Proteger, ordenar y potencializar las finanzas de dueños de empresa mediante servicios contables, fiscales y financieros personalizados, educando continuamente al cliente para que comprenda, controle y use sus números como herramienta de decisión y crecimiento sostenible.</div>
+          </div>
+          <div class="card">
+            <div class="card-lbl">Nuestra Visión</div>
+            <div class="card-title">Hacia dónde vamos</div>
+            <div class="card-text">Ser la firma de referencia en acompañamiento contable, fiscal y financiero en el Caribe, reconocida por transformar la relación del empresario con sus números — de temor a dominio — educando con inteligencia financiera.</div>
+          </div>
+        </div>
+        <div class="valores-card">
+          <div class="valores-title">Nuestros Valores</div>
+          <div class="valores-grid">
+            <div class="valor"><div class="valor-name">Transparencia</div><div class="valor-desc">Información oportuna y honesta en todo momento</div></div>
+            <div class="valor"><div class="valor-name">Legalidad</div><div class="valor-desc">Compromiso irrenunciable con el cumplimiento normativo</div></div>
+            <div class="valor"><div class="valor-name">Educación</div><div class="valor-desc">Formamos al cliente para que entienda sus números</div></div>
+            <div class="valor"><div class="valor-name">Compromiso</div><div class="valor-desc">Tu empresa importa tanto como la nuestra</div></div>
+            <div class="valor"><div class="valor-name">Responsabilidad</div><div class="valor-desc">Actuamos con rigor y precisión en cada proceso</div></div>
+            <div class="valor"><div class="valor-name">Trabajo en equipo</div><div class="valor-desc">Tu equipo y el nuestro trabajando en sinergia</div></div>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-txt"><strong>¿Tienes alguna duda?</strong>Disponibles para ayudarte en todo momento</div>
+          <div class="cc-btns">
+            <a class="btn-wa" href="https://wa.me/18494593949" target="_blank">WhatsApp</a>
+            <a class="btn-em" href="mailto:soporte@acofir.com">soporte@acofir.com</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESO -->
+      <div class="page" id="page-progreso">
+        <div class="page-hdr"><div class="page-title">Mi Avance</div><div class="page-sub">Estado actual de tu proceso con Acofir</div></div>
+        <div class="fecha-banner" id="fechaBanner" style="display:none;"><div><div class="fb-lbl">Fecha estimada de entrega</div><div class="fb-val" id="fechaVal">—</div></div></div>
+        <div class="prog-card">
+          <div class="prog-header"><div class="prog-lbl">Avance general</div><div class="prog-pct" id="pctVal">0%</div></div>
+          <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+          <div class="prog-stats">
+            <div class="pstat"><div class="pstat-val" id="stDecOk">0</div><div class="pstat-lbl">Declaraciones OK</div></div>
+            <div class="pstat"><div class="pstat-val" id="stDocOk">0</div><div class="pstat-lbl">Docs entregados</div></div>
+            <div class="pstat"><div class="pstat-val" id="stDocPend">0</div><div class="pstat-lbl">Docs pendientes</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DECLARACIONES -->
+      <div class="page" id="page-declaraciones">
+        <div class="page-hdr"><div class="page-title">Declaraciones</div><div class="page-sub">Estado de tus declaraciones fiscales de este período</div></div>
+        <div class="sec-card">
+          <div class="sec-hdr"><div class="sec-title">Estado actual</div><span class="sec-cnt cnt-a" id="cntDec">—</span></div>
+          <div id="listDec"></div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTACION -->
+      <div class="page" id="page-documentacion">
+        <div class="page-hdr"><div class="page-title">Documentación</div><div class="page-sub">Documentos que necesitamos de tu parte</div></div>
+        <div class="sec-card">
+          <div class="sec-hdr"><div class="sec-title">Estado de documentos</div><span class="sec-cnt cnt-a" id="cntDoc">—</span></div>
+          <div id="listDoc"></div>
+        </div>
+      </div>
+
+      <!-- RECORDATORIOS -->
+      <div class="page" id="page-recordatorios">
+        <div class="page-hdr"><div class="page-title">Recordatorios de Pago</div><div class="page-sub">Fechas límite de tus obligaciones fiscales — mantente al día para evitar penalidades</div></div>
+        <div class="sec-card">
+          <div class="sec-hdr"><div class="sec-title">Obligaciones fiscales</div></div>
+          <div class="rec-grid" id="listRec"></div>
+        </div>
+      </div>
+
+      <!-- SOLICITUDES -->
+      <div class="page" id="page-solicitudes">
+        <div class="page-hdr"><div class="page-title">Solicitar Servicio Adicional</div><div class="page-sub">Selecciona el servicio que necesitas y te contactamos de inmediato</div></div>
+        <div class="sol-grid" id="solGrid"></div>
+        <div class="sol-form" id="solFormWrap">
+          <div class="sol-form-title" id="solFormTitle"></div>
+          <label class="flbl">¿Qué necesitas exactamente?</label>
+          <textarea class="fta" id="solDetalle" placeholder="Cuéntanos con detalle lo que necesitas..."></textarea>
+          <label class="flbl">Horario para contactarte</label>
+          <input class="finp" type="text" id="solHorario" placeholder="Ej: Lunes a viernes de 9am a 12pm"/>
+          <button class="btn-sub" onclick="enviarSolicitud()">Enviar solicitud</button>
+          <div class="fmsg" id="solMsg"></div>
+        </div>
+      </div>
+
+      <!-- CONTACTO -->
+      <div class="page" id="page-contacto">
+        <div class="page-hdr"><div class="page-title">Contacto</div><div class="page-sub">Estamos disponibles para ayudarte</div></div>
+        <div class="sec-card">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;background:var(--light);border-radius:10px;border:1px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:700;color:var(--navy2);">WhatsApp</div><div style="font-size:12px;color:var(--slate);margin-top:2px;">849-459-3949</div></div>
+              <a class="btn-wa" href="https://wa.me/18494593949" target="_blank">Escribir por WhatsApp</a>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;background:var(--light);border-radius:10px;border:1px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:700;color:var(--navy2);">Correo electrónico</div><div style="font-size:12px;color:var(--slate);margin-top:2px;">soporte@acofir.com</div></div>
+              <a class="btn-sub" href="mailto:soporte@acofir.com" style="text-decoration:none;">Enviar correo</a>
+            </div>
+            <div style="padding:16px;background:var(--light);border-radius:10px;border:1px solid var(--border);">
+              <div style="font-size:13px;font-weight:700;color:var(--navy2);margin-bottom:6px;">Horario de atención</div>
+              <div style="font-size:13px;color:var(--slate);line-height:1.8;">Lunes a viernes: 8:00 AM — 6:00 PM<br/>Sábados: 9:00 AM — 1:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRASEÑA -->
+      <div class="page" id="page-contrasena">
+        <div class="page-hdr"><div class="page-title">Cambiar Contraseña</div><div class="page-sub">Actualiza tu contraseña de acceso al portal</div></div>
+        <div class="sec-card">
+          <label class="flbl">Contraseña actual</label>
+          <input class="finp" type="password" id="passActual" placeholder="Tu contraseña actual"/>
+          <label class="flbl">Nueva contraseña</label>
+          <input class="finp" type="password" id="passNueva" placeholder="Mínimo 6 caracteres"/>
+          <label class="flbl">Confirmar nueva contraseña</label>
+          <input class="finp" type="password" id="passConf" placeholder="Repite la nueva contraseña"/>
+          <button class="btn-sub" onclick="doChangePass()">Guardar nueva contraseña</button>
+          <div class="fmsg" id="passMsg"></div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="page" id="page-faq">
+        <div class="page-hdr"><div class="page-title">Preguntas Frecuentes</div><div class="page-sub">Todo lo que necesitas saber sobre tu proceso con Acofir</div></div>
+        <div id="faqList"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL="https://jrarsxngzncogjrbksxn.supabase.co";
+const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyYXJzeG5nem5jb2dqcmJrc3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTQ2OTYsImV4cCI6MjA5MjI3MDY5Nn0.cbl9svK7RRDMOWvct8Hf685u609V1c1i8pt3lUqmIjo";
+const DOCS_INFO={fgf:{l:"Facturas de Gastos Fijos",e:"Todo lo que pagas mensualmente relacionado con tu negocio: alquiler, luz, internet. Solo gastos del negocio — los gastos personales no aplican y pueden causarte problemas con la DGII."},fgv:{l:"Facturas de Gastos Variables",e:"Compras para operar tu negocio que no son regulares. Deben ser gastos del negocio, no personales. La DGII puede auditar y rechazar gastos sin relación con tu actividad."},fpi:{l:"Facturas de Proveedores Informales",e:"Compraste algo a alguien que no te dio factura fiscal. Tiene un manejo especial ante el gobierno."},ing:{l:"Ingresos",e:"Todo el dinero que entró a tu empresa este mes. Necesario para calcular exactamente cuánto le debes al gobierno."},gfin:{l:"Gastos Financieros",e:"Los intereses que te cobra el banco por préstamos o tarjetas de la empresa. Son deducibles."},efin:{l:"Estados Financieros",e:"El chequeo médico anual de tu empresa. Muestra si estás ganando, perdiendo, cuánto debes. Necesario para declarar y para pedir préstamos."},ctss:{l:"Cambio en TSS",e:"Contrataste alguien nuevo o alguien se fue. El gobierno necesita saberlo para calcular el seguro social."},cret:{l:"Cartas de Retenciones",e:"Cuando un cliente te descuenta un porcentaje de tu pago y lo entrega al gobierno, esta carta es el comprobante. Sin ella podrías pagar ese impuesto dos veces."}};
+const DECS_INFO={I12:{l:"I-12",e:"Si pagaste dividendos o intereses este mes. Vence el día 10."},IR3:{l:"IR-3",e:"Cuando retienes un porcentaje del pago a un proveedor para el gobierno. Vence el día 10."},IR17:{l:"IR-17",e:"El impuesto que descuentas del sueldo de tus empleados. Vence el día 10."},F606:{l:"606",e:"Cada mes reportas al gobierno todo lo que compraste. Vence el día 15."},F607:{l:"607",e:"Cada mes reportas al gobierno todo lo que vendiste. Vence el día 15."},F608:{l:"608",e:"Si anulaste alguna factura este mes, aquí lo reportas."},ITBIS:{l:"ITBIS",e:"El impuesto que cobras en tus ventas y entregas al gobierno. 18% general, 16% algunos productos. Vence el día 20."},IR2:{l:"IR-2",e:"Una vez al año reportas lo que le pagaste a personas que trabajan contigo pero no son empleados fijos."},IR1:{l:"IR-1",e:"Tu declaración anual de ingresos. Se presenta una vez al año."}};
+const REC_INFO=[{l:"I-12",f:"Vence día 10 de cada mes"},{l:"IR-3",f:"Vence día 10 de cada mes"},{l:"IR-16",f:"Vence día 20 de cada mes"},{l:"ITBIS",f:"Vence día 20 de cada mes"},{l:"TSS",f:"Vence último día hábil del mes"},{l:"Infotep",f:"Vence último día hábil del mes"},{l:"IR-1",f:"Declaración anual"},{l:"IR-2",f:"Declaración anual"}];
+const SERVICIOS=[{id:"ef_banco",name:"Estados Financieros para Entidades Bancarias",desc:"Preparación de estados financieros para solicitud de crédito o financiamiento bancario."},{id:"ef_interinos",name:"Estados Financieros Interinos",desc:"Corte de estados financieros a una fecha específica dentro del año fiscal."},{id:"rel_gastos",name:"Relación de Gastos / Ingresos",desc:"Resumen detallado de gastos e ingresos para análisis o presentación."},{id:"plan360",name:"Visión 360 — Tu Salud Fiscal y Financiera",desc:"Llevamos a tu empresa a ser fiscal y financieramente sana. Contabilidad completa más gestión fiscal."}];
+const FAQS=[{q:"¿Con qué frecuencia se actualiza mi información?",a:"Tu información se actualiza en tiempo real cada vez que nuestro equipo registra una actividad en tu cuenta."},{q:"¿Cuándo debo entregar mis documentos?",a:"Preferiblemente antes del día 10 de cada mes. Esto nos permite trabajar con tiempo y darte una proyección de lo que vas a declarar."},{q:"¿Qué pasa si no declaro a tiempo?",a:"La DGII aplica intereses del 10% y recargos del 1% sobre el valor a pagar. Por eso trabajamos con anticipación para que nunca enfrentes penalidades."},{q:"¿Puedo ver mis declaraciones anteriores?",a:"Sí. Búscalas en tu correo por el mes que necesitas. Si necesitas ayuda escríbenos a soporte@acofir.com."},{q:"¿Qué hago si tengo un pago pendiente?",a:"Comunícate con nuestro equipo de inmediato. Podemos orientarte sobre los pasos para evitar penalidades."},{q:"¿Cómo cambio mi contraseña?",a:"Desde el menú izquierdo en la sección Cambiar Contraseña."}];
+let cliente=null,solSelId=null;
+renderFAQ();renderSolicitudes();
+async function doLogin(){
+  const email=document.getElementById("inpEmail").value.trim();
+  const rnc=document.getElementById("inpRNC").value.trim().replace(/[^0-9]/g,"");
+  const pass=document.getElementById("inpPass").value.trim();
+  const err=document.getElementById("loginErr");
+  err.textContent="";
+  if(!email||!rnc||!pass){err.textContent="Completa todos los campos";return;}
+  const btn=document.getElementById("btnLogin");
+  btn.textContent="Verificando...";btn.disabled=true;
+  try{
+    const res=await fetch(SUPA_URL+"/rest/v1/crm_clientes?select=*&order=fecha_entrega_esperada.asc.nullslast,nombre.asc",{headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY}});
+    if(!res.ok){err.textContent="Error de conexión. Intenta de nuevo.";btn.textContent="Entrar a mi portal";btn.disabled=false;return;}
+    const all=await res.json();
+    const found=all.find(c=>(c.rnc||"").replace(/[^0-9]/g,"")=== rnc);
+    if(!found){err.textContent="RNC no encontrado. Verifica e intenta de nuevo.";btn.textContent="Entrar a mi portal";btn.disabled=false;return;}
+    if(pass!==(found.portal_password||"")){err.textContent="Contraseña incorrecta.";btn.textContent="Entrar a mi portal";btn.disabled=false;return;}
+    found.decs=found.decs||{};found.docs=found.docs||{};found.conts=found.conts||{};found.recs=found.recs||{};found.tss=found.tss||{};
+    cliente=found;showApp();
+  }catch(e){err.textContent="Error de conexión. Verifica tu internet.";}
+  btn.textContent="Entrar a mi portal";btn.disabled=false;
+}
+function showApp(){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("sbNombre").textContent=cliente.nombre;
+  document.getElementById("sbRNC").textContent=cliente.rnc;
+  document.getElementById("whTitle").textContent="Bienvenido, "+cliente.nombre.split(" ")[0];
+  document.getElementById("whRNC").textContent=cliente.rnc;
+  if(cliente.fecha_entrega){document.getElementById("fechaBanner").style.display="flex";document.getElementById("fechaVal").textContent=cliente.fecha_entrega;}
+  renderProgress();renderDecs();renderDocs();renderRecs();updateBadges();
+}
+function doLogout(){cliente=null;document.getElementById("app").style.display="none";document.getElementById("loginScreen").style.display="flex";document.getElementById("inpPass").value="";document.getElementById("loginErr").textContent="";showPage("bienvenida");}
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  document.querySelectorAll(".sb-btn").forEach(b=>b.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  document.getElementById("sidebar").classList.remove("open");
+}
+function updateBadges(){
+  const dp=Object.values(cliente.decs||{}).filter(d=>d.vis&&d.est!=="N/A"&&d.est!=="Declarado").length;
+  const docp=Object.values(cliente.docs||{}).filter(d=>d.vis!==false&&d.est!=="N/A"&&d.est!=="Data Cargada").length;
+  if(dp>0){const b=document.getElementById("sbBadgeDec");b.textContent=dp;b.style.display="inline";}
+  if(docp>0){const b=document.getElementById("sbBadgeDoc");b.textContent=docp;b.style.display="inline";}
+}
+function renderProgress(){
+  const c=cliente;
+  const docs=Object.entries(c.docs||{}).filter(([k,v])=>v&&v.est!=="N/A"&&v.vis!==false);
+  const docOk=docs.filter(([k,v])=>v.est==="Data Cargada").length;
+  const docPend=docs.length-docOk;
+  const decs=Object.entries(c.decs||{}).filter(([k,v])=>v&&v.vis&&v.est!=="N/A");
+  const decOk=decs.filter(([k,v])=>v.est==="Declarado").length;
+  const total=docs.length+decs.length;
+  const pct=total>0?Math.round((docOk+decOk)/total*100):0;
+  document.getElementById("pctVal").textContent=pct+"%";
+  setTimeout(()=>document.getElementById("progFill").style.width=pct+"%",300);
+  document.getElementById("stDecOk").textContent=decOk;
+  document.getElementById("stDocOk").textContent=docOk;
+  document.getElementById("stDocPend").textContent=docPend;
+}
+function renderDecs(){
+  const c=cliente;
+  const el=document.getElementById("listDec");
+  const cnt=document.getElementById("cntDec");
+  const decs=Object.entries(c.decs||{}).filter(([k,v])=>v&&v.vis&&v.est!=="N/A");
+  if(!decs.length){el.innerHTML='<p style="color:var(--slate);font-size:13px;padding:8px 0;">Sin declaraciones configuradas para este período.</p>';return;}
+  let pend=0;
+  el.innerHTML=decs.map(([k,v])=>{
+    const info=DECS_INFO[k]||{l:k,e:""};
+    const ok=v.est==="Declarado";
+    const proc=v.est==="En proceso de completar";
+    if(!ok)pend++;
+    const cls=ok?"bg":proc?"bb":"br";
+    const dcls=ok?"dg":proc?"db":"dr";
+    const lbl=ok?"Declarado y enviado a tu correo":proc?"Recibimos tu información, la estamos procesando":"Esperamos por ti — súbelo pronto";
+    return `<div class="item"><div class="item-info"><div class="item-name">${info.l}</div>${info.e?`<button class="item-exp-btn" onclick="toggleExp('ed_${k}')">¿Qué es?</button><div class="item-exp" id="ed_${k}">${info.e}</div>`:""}</div><span class="badge ${cls}"><span class="dot ${dcls}"></span>${lbl}</span></div>`;
+  }).join("");
+  cnt.textContent=pend+(pend===1?" pendiente":" pendientes");
+  cnt.className="sec-cnt "+(pend>0?"cnt-a":"cnt-g");
+}
+function renderDocs(){
+  const c=cliente;
+  const el=document.getElementById("listDoc");
+  const cnt=document.getElementById("cntDoc");
+  const docs=Object.entries(c.docs||{}).filter(([k,v])=>v&&v.vis!==false&&v.est!=="N/A");
+  if(!docs.length){el.innerHTML='<p style="color:var(--slate);font-size:13px;padding:8px 0;">Sin documentos configurados.</p>';return;}
+  let pend=0;
+  el.innerHTML=docs.map(([k,v])=>{
+    const info=DOCS_INFO[k]||{l:k,e:""};
+    const ok=v.est==="Data Cargada";
+    const val=v.est==="Validar con el Cliente";
+    if(!ok)pend++;
+    const cls=ok?"bg":val?"ba":"br";
+    const dcls=ok?"dg":val?"da":"dr";
+    const lbl=ok?"Recibido — gracias por enviarlo":val?"En validación contigo — revisando juntos":"Pendiente de entrega — lo esperamos de tu parte";
+    const isCret=k==="cret";
+    return `<div class="item" style="${isCret&&!ok?"background:#fef9ee;border-radius:8px;padding:12px;margin-bottom:4px;":""}"><div class="item-info"><div class="item-name">${info.l}</div>${!ok?`<div class="item-sub">Documento requerido: ${info.l}</div>`:""} ${isCret&&v.factura?`<div class="item-sub">Factura solicitada: #${v.factura}</div>`:""} ${info.e?`<button class="item-exp-btn" onclick="toggleExp('edoc_${k}')">¿Qué es?</button><div class="item-exp" id="edoc_${k}">${info.e}</div>`:""}</div><span class="badge ${cls}"><span class="dot ${dcls}"></span>${lbl}</span></div>`;
+  }).join("");
+  cnt.textContent=pend+(pend===1?" pendiente":" pendientes");
+  cnt.className="sec-cnt "+(pend>0?"cnt-a":"cnt-g");
+}
+function renderRecs(){
+  document.getElementById("listRec").innerHTML=REC_INFO.map(r=>`<div class="rec-item"><div class="rec-name">${r.l}</div><div class="rec-date">${r.f}</div></div>`).join("");
+}
+function renderSolicitudes(){
+  const g=document.getElementById("solGrid");
+  if(!g)return;
+  g.innerHTML=SERVICIOS.map(s=>`<div class="sol-card" id="solc_${s.id}" onclick="selSolicitud('${s.id}')"><div class="sol-name">${s.name}</div><div class="sol-desc">${s.desc}</div></div>`).join("");
+}
+function selSolicitud(id){
+  const s=SERVICIOS.find(x=>x.id===id);if(!s)return;
+  if(solSelId===id){solSelId=null;document.querySelectorAll(".sol-card").forEach(c=>c.classList.remove("sel"));document.getElementById("solFormWrap").classList.remove("open");return;}
+  solSelId=id;document.querySelectorAll(".sol-card").forEach(c=>c.classList.remove("sel"));document.getElementById("solc_"+id).classList.add("sel");document.getElementById("solFormTitle").textContent=s.name;document.getElementById("solFormWrap").classList.add("open");document.getElementById("solDetalle").value="";document.getElementById("solMsg").style.display="none";
+}
+async function enviarSolicitud(){
+  if(!solSelId)return;
+  const s=SERVICIOS.find(x=>x.id===solSelId);
+  const det=document.getElementById("solDetalle").value.trim();
+  const hor=document.getElementById("solHorario").value.trim();
+  const msg=document.getElementById("solMsg");
+  if(!det){showMsg(msg,"Describe lo que necesitas",false);return;}
+  const btn=document.querySelector("#page-solicitudes .btn-sub");
+  btn.textContent="Enviando...";btn.disabled=true;
+  try{
+    await fetch(SUPA_URL+"/rest/v1/crm_notifications",{method:"POST",headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({tipo:"solicitud_servicio",mensaje:"Cliente: "+cliente.nombre+"\nRNC: "+cliente.rnc+"\nServicio: "+s.name+"\nDetalle: "+det+"\nHorario: "+(hor||"No especificado"),destinatarios:"soporte@acofir.com",fecha:new Date().toISOString()})});
+    showMsg(msg,"Solicitud enviada. Te contactaremos pronto.",true);
+    document.getElementById("solDetalle").value="";document.getElementById("solHorario").value="";
+    setTimeout(()=>{solSelId=null;document.querySelectorAll(".sol-card").forEach(c=>c.classList.remove("sel"));document.getElementById("solFormWrap").classList.remove("open");},3000);
+  }catch(e){showMsg(msg,"Error al enviar. Escríbenos al WhatsApp.",false);}
+  btn.textContent="Enviar solicitud";btn.disabled=false;
+}
+async function doChangePass(){
+  const actual=document.getElementById("passActual").value.trim();
+  const nueva=document.getElementById("passNueva").value.trim();
+  const conf=document.getElementById("passConf").value.trim();
+  const msg=document.getElementById("passMsg");
+  if(!actual||!nueva||!conf){showMsg(msg,"Completa todos los campos",false);return;}
+  if(nueva!==conf){showMsg(msg,"Las contraseñas nuevas no coinciden",false);return;}
+  if(nueva.length<6){showMsg(msg,"Mínimo 6 caracteres",false);return;}
+  if(actual!==cliente.portal_password){showMsg(msg,"La contraseña actual es incorrecta",false);return;}
+  try{
+    const r=await fetch(SUPA_URL+"/rest/v1/crm_clientes?nombre=eq."+encodeURIComponent(cliente.nombre),{method:"PATCH",headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({portal_password:nueva})});
+    if(r.ok||r.status===204){cliente.portal_password=nueva;showMsg(msg,"Contraseña actualizada correctamente",true);document.getElementById("passActual").value="";document.getElementById("passNueva").value="";document.getElementById("passConf").value="";}
+    else{showMsg(msg,"Error al guardar. Intenta de nuevo.",false);}
+  }catch(e){showMsg(msg,"Error de conexión.",false);}
+}
+function renderFAQ(){
+  const el=document.getElementById("faqList");if(!el)return;
+  el.innerHTML=FAQS.map((f,i)=>`<div class="faq"><div class="faq-q" onclick="toggleFAQ(${i})"><span class="faq-q-txt">${f.q}</span><span class="faq-arr" id="farr_${i}">▼</span></div><div class="faq-a" id="fans_${i}"><p>${f.a}</p></div></div>`).join("");
+}
+function toggleFAQ(i){const a=document.getElementById("fans_"+i);const arr=document.getElementById("farr_"+i);const open=a.classList.contains("open");document.querySelectorAll(".faq-a.open").forEach(x=>x.classList.remove("open"));document.querySelectorAll(".faq-arr.open").forEach(x=>x.classList.remove("open"));if(!open){a.classList.add("open");arr.classList.add("open");}}
+function toggleExp(id){const el=document.getElementById(id);if(el)el.classList.toggle("open");}
+function showMsg(el,txt,ok){el.textContent=txt;el.style.display="block";el.className="fmsg "+(ok?"fm-ok":"fm-err");setTimeout(()=>el.style.display="none",4000);}
+</script>
+</body>
+</html>
+<!-- PATCH: Portal Access Log -->
+<script>
+const _origShowApp = showApp;
+showApp = async function(){
+  _origShowApp();
+  try{
+    await fetch(SUPA_URL+"/rest/v1/portal_access_log",{
+      method:"POST",
+      headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify({
+        cliente:cliente.nombre,
+        rnc:cliente.rnc,
+        fecha:new Date().toISOString(),
+        hora:new Date().toLocaleTimeString("es-DO"),
+        fecha_local:new Date().toLocaleDateString("es-DO")
+      })
+    });
+  }catch(e){}
+};
+</script>
