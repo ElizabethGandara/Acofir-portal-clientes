@@ -378,7 +378,7 @@ async function doLogin(){
   const pass=document.getElementById("inpPass").value.trim();
   const err=document.getElementById("loginErr");
   err.textContent="";
-  if(!email||!rnc||!pass){err.textContent="Completa todos los campos";return;}
+  if(!rnc||!pass){err.textContent="Completa RNC y contraseña";return;}
   const btn=document.getElementById("btnLogin");
   btn.textContent="Verificando...";btn.disabled=true;
   try{
